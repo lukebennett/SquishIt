@@ -16,6 +16,7 @@ namespace SquishIt.Framework.JavaScript
         private List<string> javaScriptFiles = new List<string>();
         private List<string> remoteJavaScriptFiles = new List<string>();
         private List<string> embeddedResourceJavaScriptFiles = new List<string>();
+        private List<string> watchedFiles = new List<string>();
         
         private IJavaScriptMinifier javaScriptMinifier = new MsMinifier();
         private const string scriptTemplate = "<script type=\"text/javascript\" {0}src=\"{1}\"></script>";
@@ -75,6 +76,12 @@ namespace SquishIt.Framework.JavaScript
             return this;
         }
 
+        IJavaScriptBundleBuilder IJavaScriptBundle.Watch(string filePath)
+        {
+            watchedFiles.Add(filePath);
+            return this;
+        }
+
         public IJavaScriptBundleBuilder WithMinifier(JavaScriptMinifiers javaScriptMinifier)
         {
             this.javaScriptMinifier = MapMinifierEnumToType(javaScriptMinifier);
@@ -122,6 +129,12 @@ namespace SquishIt.Framework.JavaScript
             {
                 remoteJavaScriptFiles.Add(remoteUri);
             }
+            return this;
+        }
+
+        IJavaScriptBundleBuilder IJavaScriptBundleBuilder.Watch(string filePath)
+        {
+            watchedFiles.Add(filePath);
             return this;
         }
 
@@ -211,9 +224,13 @@ namespace SquishIt.Framework.JavaScript
                         string compressedJavaScript;
                         string hash = null;
                         bool hashInFileName = false;
+                        var dependentFiles = new List<string>();
                         
                         List<string> files = GetFiles(GetFilePaths(javaScriptFiles));
+                        List<string> watched = GetFiles(GetFilePaths(watchedFiles));
                         files.AddRange(GetFiles(GetEmbeddedResourcePaths(embeddedResourceJavaScriptFiles)));
+                        dependentFiles.AddRange(files);
+                        dependentFiles.AddRange(watched);
                         
                         if (renderTo.Contains("#"))
                         {
@@ -259,7 +276,7 @@ namespace SquishIt.Framework.JavaScript
                             }
                         }
                         renderedScriptTag = String.Concat(GetFilesForRemote(), renderedScriptTag);
-                        bundleCache.AddToCache(key, renderedScriptTag, files);
+                        bundleCache.AddToCache(key, renderedScriptTag, dependentFiles);
                     }
                 }
             }

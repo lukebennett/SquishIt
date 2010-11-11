@@ -21,6 +21,7 @@ namespace SquishIt.Framework.Css
         private List<string> cssFiles = new List<string>();
         private List<string> remoteCssFiles = new List<string>();
         private List<string> embeddedResourceCssFiles = new List<string>();
+        private List<string> watchedFiles = new List<string>();
         private List<string> dependentFiles = new List<string>();
         private ICssCompressor cssCompressorInstance = new MsCompressor();
         private bool renderOnlyIfOutputFileMissing = false;
@@ -97,9 +98,21 @@ namespace SquishIt.Framework.Css
             return this;
         }
 
+        ICssBundleBuilder ICssBundleBuilder.Watch(string filePath)
+        {
+            watchedFiles.Add(filePath);
+            return this;
+        }
+
         ICssBundleBuilder ICssBundle.Add(string cssScriptPath)
         {
             cssFiles.Add(cssScriptPath);
+            return this;
+        }
+
+        ICssBundleBuilder ICssBundle.Watch(string filePath)
+        {
+            watchedFiles.Add(filePath);
             return this;
         }
 
@@ -231,8 +244,10 @@ namespace SquishIt.Framework.Css
                         string outputFile = ResolveAppRelativePathToFileSystem(renderTo);
 
                         List<string> files = GetFiles(GetFilePaths(cssFiles));
+                        List<string> watched = GetFiles(GetFilePaths(watchedFiles));
                         files.AddRange(GetFiles(GetEmbeddedResourcePaths(embeddedResourceCssFiles)));
                         dependentFiles.AddRange(files);
+                        dependentFiles.AddRange(watched);
 
                         if (renderTo.Contains("#"))
                         {
