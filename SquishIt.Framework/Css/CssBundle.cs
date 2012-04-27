@@ -80,11 +80,10 @@ namespace SquishIt.Framework.Css
                     var engine = engineFactory.GetEngine();
                     var css = engine.TransformToCss(content, file);
 
-                    var appPath = FileSystem.ResolveFileSystemPathToAppRelative(dir);
                     var importPaths = engine.GetImports();
                     foreach (var importPath in importPaths)
                     {
-                        var import = FileSystem.ResolveAppRelativePathToFileSystem(Path.Combine(appPath, importPath));
+                        var import = Path.Combine(dir, importPath);
                         DependentFiles.Add(import);
                     }
 
